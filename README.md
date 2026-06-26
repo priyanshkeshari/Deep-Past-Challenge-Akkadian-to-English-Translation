@@ -73,7 +73,8 @@ By selecting the specific candidate that possesses the **highest aggregate conse
 
 ---
 
-
+## 👨‍💼 Author
+Developed by [Priyansh Keshari](https://github.com/priyanshkeshari) as part of the *Neural-machine-translation*.
 
 
 <!-- Final tracking -->
