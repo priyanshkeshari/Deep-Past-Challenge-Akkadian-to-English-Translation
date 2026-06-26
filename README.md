@@ -15,6 +15,8 @@ Translating ancient Akkadian introduces deep out-of-vocabulary (OOV) challenges.
 - Standard subword tokenizers (like SentencePiece used in T5/BART) split these syllables arbitrarily, isolating functional suffixes and heavily fragmenting meaning.
 - We opted for **ByT5**, a completely *byte-level* (character-level) model. By bypassing the subword dictionary entirely, the model handles out-of-distribution variations, special unicode Cuneiform representations, and partial words seamlessly without failing back to `<unk>` tokens. 
 
+---
+
 ### 2. Denoising Tablet Damage (Data Augmentation)
 Since we are dealing with thousands of unearthed, chipped, and physically damaged clay tablets, data augmentation couldn't just rely on standard NLP tricks like synonym replacement (which doesn't exist broadly for Akkadian). 
 
@@ -22,6 +24,8 @@ We engineered a **Tablet Damage Simulator** inside `AkkadianDataAugmentor`:
 - During training batch generation, `1-4` sequential or random tokens are entirely wiped and replaced with `<gap>`.
 - The Loss function acts as a **Denoising Autoencoder**, aggressively teaching the model to interpolate the missing semantic context to still arrive at the pristine English target translation.
 - This creates massive robustness against noisy or incomplete evaluation sets.
+
+---
 
 ### 3. Bidirectional Anchoring
 Low-resource linguistic tasks often suffer from "catastrophic forgetting", where the model learns overarching statistical grammar (sentence generation) but starts hallucinating hard vocab terms.
@@ -31,16 +35,22 @@ Low-resource linguistic tasks often suffer from "catastrophic forgetting", where
   - `translate: english to akkadian: [def] -> [word]`
 - By forcing the model to continuously auto-regress backward and forward on literal translations, we act as a severe regularization mechanism keeping the generation statistically rooted to academic dictionaries.
 
+---
+
 ### 4. Custom Sequence-Weighted Loss Function
 The Deep Past Competition is evaluated on the geometric mean of `BLEU` and `chrF++`. 
 - By default, standard Cross-Entropy Loss averages error across all tokens equally. This routinely results in the model getting "lazy" by perfectly memorizing easy one-word dictionary definitions to lower perplexity, while failing drastically on complex 20-word multi-clause administrative texts.
 - **Solution (`WeightedSeq2SeqTrainer`)**: We applied a dynamic mathematical penalty scaling factor corresponding to the **character length** of the source sequence. The longer and more syntactically complex the row, the heavier the gradient penalty on a mistake. This explicitly prioritizes `BLEU` coherence along complex sentences.
+
+---
 
 ### 5. Deterministic Pre/Post-processing
 We completely eliminated dataset discrepancy noise:
 - **Transcription Alignment**: Automatically standardized fraction representations (e.g., standardizing erratic translations of `5/12 shekel` into canonical competition forms `⅓ shekel 15 grains`).
 - **Sumerogram Protection**: Unifying `KÙ.BABBAR` logic uniformly. 
 - **Stray Marks**: Cleared stray regex artifacts (`..`, `xx`, `<< >>`) that unfairly penalized `chrF++` matching.
+
+---
 
 ### 6. Inference Strategy: Cross-Model Ensemble MBR Decoding
 While `train.py` establishes our robust neural weights, our highest gains were realized in the decoding suite (`inference.ipynb`). Because Akkadian translation is highly fragmented, committing to an absolute "highest probability map" (Standard Greedy/Beam Search) is exceptionally brittle. Instead, we adopted an **Ensemble Minimum Bayes Risk (MBR)** architecture, which essentially crowdsources the correct translation across multiple models and probabilistic pathways.
