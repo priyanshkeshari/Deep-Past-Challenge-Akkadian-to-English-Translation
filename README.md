@@ -9,6 +9,7 @@ Our solution consists of two fundamental parts:
 
 
 ## 🛠 Engineering & Data Science Justifications
+---
 
 ### 1. Model Selection: `google/byt5-large`
 Translating ancient Akkadian introduces deep out-of-vocabulary (OOV) challenges. Transliterations consist of unpredictable syllables, non-standard diacritical variants, and fragmented character chunks. 
